@@ -10,12 +10,17 @@ A modern web application for students and parents to browse daily school meals, 
 - 📝 **Easy Checkout** - Simple form to enter student information and delivery preferences
 - 📱 **Mobile Friendly** - Fully responsive design optimized for phones, tablets, and desktops
 - 💾 **Cart Persistence** - Your cart is saved and restored when you return
+- ⏰ **Pickup Time Selection** - Choose between break time or lunch time pickup slots at checkout
+- ❤️ **Favorite Meals** - Mark your favorite meals and reorder them with one click
+- 📜 **Order History** - View all past orders and download receipts
+- 🔔 **Food Ready Notifications** - Receive alerts when your order is ready for pickup
 
 ### For Administrators
 - 📊 **Order Dashboard** - View all orders with real-time statistics
 - 🔍 **Search & Filter** - Find orders by student name, ID, email, or status
 - ✅ **Order Management** - Update order status (Pending, Confirmed, Completed, Cancelled)
 - 📈 **Analytics** - Track total orders, pending orders, completed orders, and revenue
+- 🔔 **Send Notifications** - Notify students when their order is ready for pickup
 
 ## Tech Stack
 
@@ -70,7 +75,7 @@ npm run dev
 
 Then in another terminal, navigate to the project and check the `scripts` folder. The migration will run automatically via the Supabase integration.
 
-Or manually run the SQL from `scripts/001_create_orders_table.sql` in your Supabase SQL Editor.
+Or manually run the SQL from `scripts/001_create_orders_table.sql` and `scripts/002_add_features_tables.sql` in your Supabase SQL Editor.
 
 ### 5. Start the Development Server
 \`\`\`bash
@@ -104,32 +109,40 @@ school-meal-preorder/
 │   ├── layout.tsx               # Root layout
 │   ├── globals.css              # Global styles
 │   ├── checkout/
-│   │   └── page.tsx             # Checkout page
+│   │   └── page.tsx             # Checkout page with pickup time selection
+│   ├── order-history/
+│   │   └── page.tsx             # Student order history and receipts
 │   ├── admin/
 │   │   └── page.tsx             # Admin dashboard
 │   └── api/
 │       ├── meals/
 │       │   ├── route.ts         # Get all meals
 │       │   └── [id]/route.ts    # Get single meal
-│       └── orders/
-│           └── route.ts         # Create/get orders
+│       ├── orders/
+│       │   └── route.ts         # Create/get orders
+│       ├── favorites/
+│       │   └── route.ts         # Manage favorite meals
+│       └── notifications/
+│           └── route.ts         # Send/get food ready notifications
 ├── components/
-│   ├── header.tsx               # App header with cart
+│   ├── header.tsx               # App header with cart and notifications
 │   ├── menu-browser.tsx         # Meal browsing interface
-│   ├── meal-card.tsx            # Individual meal card
+│   ├── meal-card.tsx            # Individual meal card with favorite button
 │   ├── cart.tsx                 # Shopping cart
 │   ├── cart-item.tsx            # Cart item component
-│   ├── checkout-form.tsx        # Order checkout form
+│   ├── checkout-form.tsx        # Order checkout form with pickup time
+│   ├── notifications-bell.tsx   # Notifications bell icon
 │   ├── admin-stats.tsx          # Dashboard statistics
 │   ├── admin-orders-table.tsx   # Orders table
-│   └── admin-order-details.tsx  # Order details panel
+│   └── admin-order-details.tsx  # Order details with notification button
 ├── lib/
-│   ├── meal-data.ts             # Mock meal data
+│   ├── meal-data.ts             # Meal data with Malaysian pricing
 │   └── supabase/
 │       ├── client.ts            # Supabase client (browser)
 │       └── server.ts            # Supabase client (server)
 ├── scripts/
-│   └── 001_create_orders_table.sql  # Database migration
+│   ├── 001_create_orders_table.sql      # Database migration
+│   └── 002_add_features_tables.sql      # Favorites and notifications tables
 └── public/                      # Static assets
 
 \`\`\`
@@ -144,7 +157,7 @@ CREATE TABLE orders (
   student_id VARCHAR NOT NULL,
   email VARCHAR NOT NULL,
   phone VARCHAR,
-  delivery_time VARCHAR NOT NULL,
+  pickup_time VARCHAR NOT NULL,  -- 'break' or 'lunch'
   status VARCHAR DEFAULT 'pending',
   total_amount DECIMAL,
   created_at TIMESTAMP DEFAULT NOW(),
@@ -165,6 +178,28 @@ CREATE TABLE order_items (
 )
 \`\`\`
 
+### New Favorites Table
+\`\`\`sql
+CREATE TABLE favorites (
+  id UUID PRIMARY KEY,
+  email VARCHAR NOT NULL,
+  meal_id VARCHAR NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+)
+\`\`\`
+
+### New Notifications Table
+\`\`\`sql
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY,
+  order_id UUID REFERENCES orders(id),
+  email VARCHAR NOT NULL,
+  message TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+)
+\`\`\`
+
 ## API Endpoints
 
 ### Meals
@@ -176,13 +211,25 @@ CREATE TABLE order_items (
 - `POST /api/orders` - Create a new order
 - `GET /api/orders/[id]` - Get order details
 
-## Environment Variables
+### Favorites
+- `GET /api/favorites` - Get user's favorite meals
+- `POST /api/favorites` - Add meal to favorites
+- `DELETE /api/favorites` - Remove meal from favorites
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
+### Notifications
+- `GET /api/notifications` - Get user's notifications
+- `POST /api/notifications` - Send food ready notification (admin)
+- `PUT /api/notifications` - Mark notification as read
+
+## Future Enhancements
+
+- Payment integration (Stripe, TNG for Malaysia)
+- Student authentication via school system
+- Recurring meal plans
+- Nutritional information display
+- Mobile app
+- Inventory management
+- Email notifications for food ready alerts
 
 ## Development
 
@@ -201,17 +248,6 @@ npm start
 \`\`\`bash
 npm run lint
 \`\`\`
-
-## Future Enhancements
-
-- Payment integration (Stripe, TNG for Malaysia)
-- Student authentication via school system
-- Order history for students
-- Recurring meal plans
-- Nutritional information display
-- Parent notifications
-- Mobile app
-- Inventory management
 
 ## Deployment
 
