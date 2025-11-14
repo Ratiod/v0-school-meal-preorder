@@ -2,6 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import { Bell } from 'lucide-react'
 
 interface Order {
   id: string
@@ -22,9 +24,40 @@ interface AdminOrderDetailsProps {
 }
 
 export default function AdminOrderDetails({ order, onClose }: AdminOrderDetailsProps) {
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isSendingNotification, setIsSendingNotification] = useState(false)
+
   const handleStatusChange = async (newStatus: string) => {
     // This can be implemented to update order status via API
     console.log("Update order status to:", newStatus)
+  }
+
+  const handleSendNotification = async () => {
+    setIsSendingNotification(true)
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId: order.id,
+          studentEmail: order.email,
+          message: `Your order #${order.id} is ready for pickup!`,
+        }),
+      })
+
+      if (response.ok) {
+        alert(`Notification sent to ${order.student_name}`)
+      } else {
+        alert("Failed to send notification")
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error)
+      alert("Error sending notification")
+    } finally {
+      setIsSendingNotification(false)
+    }
   }
 
   return (
@@ -108,6 +141,17 @@ export default function AdminOrderDetails({ order, onClose }: AdminOrderDetailsP
               <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded">{order.notes}</p>
             </div>
           )}
+
+          <div className="pt-4 border-t border-slate-200">
+            <Button
+              onClick={handleSendNotification}
+              disabled={isSendingNotification}
+              className="w-full gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <Bell className="w-4 h-4" />
+              {isSendingNotification ? "Sending..." : "Send Food Ready Alert"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams } from 'next/navigation'
 
 interface CheckoutFormProps {
   onOrderComplete: (orderData: any) => void
@@ -18,11 +18,12 @@ export function CheckoutForm({ onOrderComplete }: CheckoutFormProps) {
     studentId: "",
     email: "",
     date: "",
+    pickupTime: "lunch", // Added pickup time field
     notes: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
@@ -32,7 +33,6 @@ export function CheckoutForm({ onOrderComplete }: CheckoutFormProps) {
     setIsSubmitting(true)
 
     try {
-      // Get cart items from sessionStorage or pass via route
       const cartItems = JSON.parse(sessionStorage.getItem("cartItems") || "[]")
       const total = JSON.parse(sessionStorage.getItem("cartTotal") || "0")
 
@@ -56,7 +56,6 @@ export function CheckoutForm({ onOrderComplete }: CheckoutFormProps) {
 
       const result = await response.json()
 
-      // Clear cart from storage
       sessionStorage.removeItem("cartItems")
       sessionStorage.removeItem("cartTotal")
 
@@ -112,16 +111,30 @@ export function CheckoutForm({ onOrderComplete }: CheckoutFormProps) {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Preferred Pickup Date</label>
-          <input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Preferred Pickup Date</label>
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Pickup Time</label>
+            <select
+              name="pickupTime"
+              value={formData.pickupTime}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="break">Break Time</option>
+              <option value="lunch">Lunch Time</option>
+            </select>
+          </div>
         </div>
 
         <div>

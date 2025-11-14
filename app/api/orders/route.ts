@@ -20,6 +20,7 @@ export async function POST(request: Request) {
           student_id: body.studentId,
           email: body.email,
           order_date: body.date,
+          pickup_time: body.pickupTime || "lunch",
           notes: body.notes || "",
           total_amount: body.total,
           status: "pending",
