@@ -24,6 +24,7 @@ export async function POST(request: Request) {
           notes: body.notes || "",
           total_amount: body.total,
           status: "pending",
+          user_id: body.userId || null,
         },
       ])
       .select()

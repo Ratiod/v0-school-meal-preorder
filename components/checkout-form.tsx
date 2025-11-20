@@ -2,26 +2,37 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { useSearchParams } from 'next/navigation'
+import { useAuth } from "@/lib/auth-context"
+import { createClient } from "@/lib/supabase/client"
 
 interface CheckoutFormProps {
   onOrderComplete: (orderData: any) => void
 }
 
 export function CheckoutForm({ onOrderComplete }: CheckoutFormProps) {
-  const searchParams = useSearchParams()
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     studentName: "",
     studentId: "",
     email: "",
     date: "",
-    pickupTime: "lunch", // Added pickup time field
+    pickupTime: "lunch",
     notes: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        email: user.email || "",
+        studentName: user.user_metadata?.name || "",
+      }))
+    }
+  }, [user])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -40,6 +51,7 @@ export function CheckoutForm({ onOrderComplete }: CheckoutFormProps) {
         ...formData,
         items: cartItems,
         total: total,
+        userId: user?.id || null,
       }
 
       const response = await fetch("/api/orders", {

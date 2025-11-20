@@ -26,10 +26,34 @@ interface AdminOrderDetailsProps {
 export default function AdminOrderDetails({ order, onClose }: AdminOrderDetailsProps) {
   const [isUpdating, setIsUpdating] = useState(false)
   const [isSendingNotification, setIsSendingNotification] = useState(false)
+  const [currentStatus, setCurrentStatus] = useState(order.status)
 
   const handleStatusChange = async (newStatus: string) => {
-    // This can be implemented to update order status via API
-    console.log("Update order status to:", newStatus)
+    setIsUpdating(true)
+    try {
+      const response = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId: order.id,
+          status: newStatus,
+        }),
+      })
+
+      if (response.ok) {
+        setCurrentStatus(newStatus)
+        alert("Order status updated successfully")
+      } else {
+        alert("Failed to update order status")
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error)
+      alert("Error updating order status")
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   const handleSendNotification = async () => {
@@ -124,9 +148,10 @@ export default function AdminOrderDetails({ order, onClose }: AdminOrderDetailsP
           <div className="space-y-2">
             <p className="text-sm font-semibold text-slate-900">Status</p>
             <select
-              value={order.status}
+              value={currentStatus}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900"
+              disabled={isUpdating}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 disabled:opacity-50"
             >
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
